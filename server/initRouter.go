@@ -40,5 +40,18 @@ func InitRouter(handler *controller.ControllerManager) *gin.Engine {
 
 	}
 
+	cartRoute := api.Group("/cart")
+	{
+		cartRoute.POST("/", handler.AddToCart)
+
+	}
+
+	orderRoute := api.Group("/order")
+	{
+		orderRoute.GET("/", handler.FindAllOrder)
+		orderRoute.GET("/:id", handler.FindOrderById)
+		orderRoute.POST("/", handler.CreateOrder)
+	}
+
 	return router
 }
