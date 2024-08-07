@@ -42,6 +42,9 @@ func (order *OrderService) CreateOrderTx(ctx context.Context, args db.CreateOrde
 	if err != nil {
 		return nil, err
 	}
+
+	//code create order detail
+
 	if err = tx.Commit(context.Background()); err != nil {
 		return nil, err
 	}

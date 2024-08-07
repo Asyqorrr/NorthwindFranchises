@@ -2,11 +2,13 @@ package server
 
 import (
 	"b30northwindapi/controller"
+	"b30northwindapi/middleware"
+	"b30northwindapi/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter(handler *controller.ControllerManager) *gin.Engine {
+func InitRouter(handler *controller.ControllerManager, jwt *models.JWTHandler) *gin.Engine {
 	router := gin.Default()
 
 	// set a lower memory limit for multipart form
@@ -21,6 +23,7 @@ func InitRouter(handler *controller.ControllerManager) *gin.Engine {
 
 	categoryRoute := api.Group("/category")
 	{
+		categoryRoute.Use(middleware.AuthMiddleware(jwt))
 		categoryRoute.GET("", handler.GetListCategory)
 		categoryRoute.GET("/", handler.GetListCategory)
 		categoryRoute.GET("/:id", handler.GetCategoryById)
@@ -51,6 +54,12 @@ func InitRouter(handler *controller.ControllerManager) *gin.Engine {
 		orderRoute.GET("/", handler.FindAllOrder)
 		orderRoute.GET("/:id", handler.FindOrderById)
 		orderRoute.POST("/", handler.CreateOrder)
+	}
+
+	userRoute := api.Group("/user")
+	{
+		userRoute.POST("/signup", handler.Signup)
+		userRoute.POST("/signin", handler.Sigin)
 	}
 
 	return router

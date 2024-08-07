@@ -13,10 +13,12 @@ type Querier interface {
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (*Category, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (*Order, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (*Product, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteCart(ctx context.Context, cartID int32) error
 	DeleteCategory(ctx context.Context, categoryID int32) error
 	DeleteOrder(ctx context.Context, orderID int16) error
 	DeleteProduct(ctx context.Context, productID int16) error
+	DeleteToken(ctx context.Context, userToken *string) error
 	FindAllCategory(ctx context.Context) ([]*Category, error)
 	FindAllOrder(ctx context.Context) ([]*Order, error)
 	FindAllProduct(ctx context.Context) ([]*Product, error)
@@ -27,10 +29,17 @@ type Querier interface {
 	FindCategoryById(ctx context.Context, categoryID int32) (*Category, error)
 	FindOrderById(ctx context.Context, orderID int16) (*Order, error)
 	FindProductById(ctx context.Context, productID int16) (*Product, error)
+	FindUserByPhone(ctx context.Context, userPhone *string) (*FindUserByPhoneRow, error)
+	FindUserByUserPassword(ctx context.Context, arg FindUserByUserPasswordParams) (*FindUserByUserPasswordRow, error)
+	FindUserByUsername(ctx context.Context, userName *string) (*FindUserByUsernameRow, error)
+	GetUserRoles(ctx context.Context, arg GetUserRolesParams) ([]*GetUserRolesRow, error)
 	UpdateCartQty(ctx context.Context, arg UpdateCartQtyParams) (*Cart, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (*Category, error)
 	UpdateOrderShip(ctx context.Context, arg UpdateOrderShipParams) (*Order, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (*Product, error)
+	UpdateToken(ctx context.Context, arg UpdateTokenParams) (*User, error)
+	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (*User, error)
+	UpdateUserPhone(ctx context.Context, arg UpdateUserPhoneParams) (*User, error)
 }
 
 var _ Querier = (*Queries)(nil)

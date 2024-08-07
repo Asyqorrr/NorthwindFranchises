@@ -18,3 +18,10 @@ driver_name = "postgres"
 
 server_address = ":8888"
 ###############################################################################
+# jwt server configuration
+
+[jwt]
+
+api_secret="mysecret"
+token_hour_lifespan="24h"
+###############################################################################

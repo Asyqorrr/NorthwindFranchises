@@ -103,6 +103,11 @@ type Region struct {
 	RegionDescription string `json:"region_description"`
 }
 
+type Role struct {
+	RoleID   int32   `json:"role_id"`
+	RoleName *string `json:"role_name"`
+}
+
 type Shipper struct {
 	ShipperID   int16   `json:"shipper_id"`
 	CompanyName string  `json:"company_name"`
@@ -122,4 +127,18 @@ type Supplier struct {
 	Phone        *string `json:"phone"`
 	Fax          *string `json:"fax"`
 	Homepage     *string `json:"homepage"`
+}
+
+type User struct {
+	UserID       int32   `json:"user_id"`
+	UserName     *string `json:"user_name"`
+	UserPassword *string `json:"user_password"`
+	UserPhone    *string `json:"user_phone"`
+	UserRole     *string `json:"user_role"`
+	UserToken    *string `json:"user_token"`
+}
+
+type UserRole struct {
+	UsroUserID int32 `json:"usro_user_id"`
+	UsroRoleID int32 `json:"usro_role_id"`
 }

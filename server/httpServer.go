@@ -2,6 +2,7 @@ package server
 
 import (
 	"b30northwindapi/controller"
+	"b30northwindapi/models"
 	"b30northwindapi/services"
 	"log"
 
@@ -17,11 +18,14 @@ type HttpServer struct {
 
 func InitHttpServer(config *viper.Viper, dbHandler *pgxpool.Conn) *HttpServer {
 
+	//call jwthandler
+	jwtHandler := models.NewJWTHandler(config)
+
 	//call handler & service manager
-	serviceManager := services.NewServiceManager(dbHandler)
+	serviceManager := services.NewServiceManager(dbHandler, jwtHandler)
 	controllerManager := controller.NewControllerManager(serviceManager)
 
-	router := InitRouter(controllerManager)
+	router := InitRouter(controllerManager, jwtHandler)
 
 	return &HttpServer{
 		Config: config,

@@ -7,8 +7,17 @@ import (
 )
 
 var (
-	ErrAccessForbidden = errors.New("access forbidden")
-	ErrDataNotFound    = errors.New("data not found")
+	ErrAccessForbidden     = errors.New("access forbidden")
+	ErrUserAlreadyExist    = errors.New("Username or phone already exist")
+	ErrDataNotFound        = errors.New("data not found")
+	ErrInvalidUserPassword = errors.New("Invalid username or password")
+	ErrUserPasswordEmpty   = errors.New("Username or password must not be empty")
+	ErrLoginFailed         = errors.New("Login failed")
+	ErrInvalidToken        = errors.New("Invalid token")
+	ErrUnauthorizedToken   = errors.New("UnAuthorized token")
+	ErrFailedToAuthorized  = errors.New("UnAuthorized token")
+	ErrFailedGenerateToken = errors.New("Failed to generate token")
+	ErrUpdateToken         = errors.New("Update token failed")
 )
 
 type Error struct {
