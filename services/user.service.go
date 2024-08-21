@@ -7,9 +7,9 @@ import (
 	"context"
 )
 
-func (sm *StoreManager) Signup(userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
+func (sm *StoreManager) Signup(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
 	//1. is user already signup
-	foundUser, _ := models.Nullable(sm.FindUserByUsername(context.Background(), userReq.UserName))
+	foundUser, _ := models.Nullable(sm.FindUserByUsername(ctx, userReq.UserName))
 
 	if foundUser.UserID != 0 {
 		return &models.UserResponse{}, models.NewError(models.ErrUserAlreadyExist)
@@ -20,7 +20,7 @@ func (sm *StoreManager) Signup(userReq models.CreateUserReq) (*models.UserRespon
 		UserName:     userReq.UserName,
 		UserPassword: userReq.UserPassword,
 	}
-	newUser, err := sm.CreateUser(context.Background(), argCreateUser)
+	newUser, err := sm.CreateUser(ctx, argCreateUser)
 	if err != nil {
 		return &models.UserResponse{}, models.NewError(err)
 	}
@@ -33,13 +33,13 @@ func (sm *StoreManager) Signup(userReq models.CreateUserReq) (*models.UserRespon
 	return response, nil
 }
 
-func (sm *StoreManager) Signin(userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
+func (sm *StoreManager) Signin(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
 	args := &db.FindUserByUserPasswordParams{
 		UserName:     userReq.UserName,
 		UserPassword: userReq.UserPassword,
 	}
 
-	foundUser, _ := sm.FindUserByUserPassword(context.Background(), *args)
+	foundUser, _ := sm.FindUserByUserPassword(ctx, *args)
 
 	if foundUser.UserID == 0 {
 		return &models.UserResponse{}, models.NewError(models.ErrInvalidUserPassword)
@@ -57,7 +57,7 @@ func (sm *StoreManager) Signin(userReq models.CreateUserReq) (*models.UserRespon
 		UserToken: &accessToken,
 	}
 
-	_, err := sm.UpdateToken(context.Background(), *argsUpdateToken)
+	_, err := sm.UpdateToken(ctx, *argsUpdateToken)
 
 	if err != nil {
 		return &models.UserResponse{},
@@ -75,21 +75,11 @@ func (sm *StoreManager) Signin(userReq models.CreateUserReq) (*models.UserRespon
 	return response, nil
 }
 
-func (sm *StoreManager) Signout(accessToken string) *models.Error {
-	err := sm.DeleteToken(context.Background(), &accessToken)
+func (sm *StoreManager) Signout(ctx context.Context, accessToken string) *models.Error {
+	err := sm.DeleteToken(ctx, &accessToken)
 	if err != nil {
 		return models.NewError(models.ErrUpdateToken)
 	}
 
 	return nil
 }
-
-/* func generateAccessToken(username string) (string, *models.Error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(username), bcrypt.DefaultCost)
-	if err != nil {
-		return "", models.NewError(models.ErrFailedGenerateToken)
-	}
-
-	return base64.StdEncoding.EncodeToString(hash), nil
-}
-*/

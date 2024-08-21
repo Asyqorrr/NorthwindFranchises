@@ -165,7 +165,7 @@ func (handler *OrderController) CreateOrder(c *gin.Context) {
 		ShipVia:    payload.ShipVia,
 	}
 
-	newOrder, err := handler.storedb.CreateOrderTx(*args)
+	newOrder, err := handler.storedb.CreateOrderTx(c, *args)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.NewError(err))
 		return

@@ -31,7 +31,7 @@ func (uc *UserController) Signup(c *gin.Context) {
 		UserName:     payload.UserName,
 		UserPassword: payload.UserPassword,
 	}
-	user, err := uc.storedb.Signup(*args)
+	user, err := uc.storedb.Signup(c, *args)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -51,7 +51,7 @@ func (uc *UserController) Sigin(c *gin.Context) {
 		UserName:     payload.UserName,
 		UserPassword: payload.UserPassword,
 	}
-	user, err := uc.storedb.Signin(*args)
+	user, err := uc.storedb.Signin(c, *args)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -63,7 +63,7 @@ func (uc *UserController) Sigin(c *gin.Context) {
 func (uc *UserController) Signout(c *gin.Context) {
 	accessToken := c.Request.Header.Get("Authorization")
 
-	err := uc.storedb.Signout(accessToken)
+	err := uc.storedb.Signout(c, accessToken)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return

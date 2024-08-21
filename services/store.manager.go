@@ -3,6 +3,7 @@ package services
 import (
 	db "b30northwindapi/db/sqlc"
 	"b30northwindapi/models"
+	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -10,10 +11,10 @@ import (
 //go:generate go run -mod=mod github.com/golang/mock/mockgen  -destination=./mocks/mock_store.go -build_flags=-mod=mod -package=mocks . Store
 type Store interface {
 	db.Querier
-	CreateOrderTx(args db.CreateOrderParams) (*db.Order, error)
-	Signup(userReq models.CreateUserReq) (*models.UserResponse, *models.Error)
-	Signin(userReq models.CreateUserReq) (*models.UserResponse, *models.Error)
-	Signout(accessToken string) *models.Error
+	CreateOrderTx(ctx context.Context, args db.CreateOrderParams) (*db.Order, error)
+	Signup(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error)
+	Signin(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error)
+	Signout(ctx context.Context, accessToken string) *models.Error
 }
 
 type StoreManager struct {

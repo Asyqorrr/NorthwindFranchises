@@ -47,6 +47,7 @@ func CreateRouter(handlers *controller.ControllerManager, mode string) *gin.Engi
 
 	productRoute := api.Group("/product")
 	{
+		productRoute.Use(middleware.AuthMiddleware())
 		productRoute.GET("", handlers.FindAllProduct)
 		productRoute.GET("/", handlers.FindAllProduct)
 		productRoute.POST("/", handlers.CreateProduct)
@@ -59,6 +60,7 @@ func CreateRouter(handlers *controller.ControllerManager, mode string) *gin.Engi
 
 	orderRoute := api.Group("/order")
 	{
+		productRoute.Use(middleware.AuthMiddleware())
 		orderRoute.Use(middleware.AuthMiddleware())
 		orderRoute.GET("/cart/:id", handlers.FindCartByCustomerId)
 		orderRoute.POST("/cart/add", handlers.AddToCart)

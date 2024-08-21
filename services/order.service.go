@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func (sm *StoreManager) CreateOrderTx(args db.CreateOrderParams) (*db.Order, error) {
+func (sm *StoreManager) CreateOrderTx(ctx context.Context, args db.CreateOrderParams) (*db.Order, error) {
 	tx, err := sm.dbConn.Begin(context.Background())
 	if err != nil {
 		return nil, err
@@ -16,7 +16,7 @@ func (sm *StoreManager) CreateOrderTx(args db.CreateOrderParams) (*db.Order, err
 	qtx := sm.Queries.WithTx(tx)
 
 	//populate cart list
-	carts, err := qtx.FindCartByCustomerId(context.Background(), *args.CustomerID)
+	carts, err := qtx.FindCartByCustomerId(ctx, *args.CustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func (sm *StoreManager) CreateOrderTx(args db.CreateOrderParams) (*db.Order, err
 	log.Println(carts)
 
 	//create order
-	newOrder, err := qtx.CreateOrder(context.Background(), args)
+	newOrder, err := qtx.CreateOrder(ctx, args)
 	if err != nil {
 		return nil, err
 	}
