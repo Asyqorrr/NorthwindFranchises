@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -18,6 +19,10 @@ var (
 	ErrFailedToAuthorized  = errors.New("UnAuthorized token")
 	ErrFailedGenerateToken = errors.New("Failed to generate token")
 	ErrUpdateToken         = errors.New("Update token failed")
+	ErrNoRows              = errors.New("no rows in result set")
+	/*category*/
+	ErrCategoryNameDuplicate = errors.New("Duplicate category name.")
+	ErrCategoryNotFound      = errors.New("category not found")
 )
 
 type Error struct {
@@ -72,4 +77,19 @@ func NullableID(row string, err error) (string, error) {
 	}
 
 	return "", err
+}
+
+func ConvertToApiErr(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		switch pgErr.ConstraintName {
+		case "category_name_uq":
+			return ErrCategoryNameDuplicate
+		case "user_name_uq":
+			return ErrUserAlreadyExist
+		case "no rows in result set":
+			return ErrNoRows
+		}
+	}
+	return nil
 }

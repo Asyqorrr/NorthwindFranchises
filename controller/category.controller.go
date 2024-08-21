@@ -2,9 +2,11 @@ package controller
 
 import (
 	db "b30northwindapi/db/sqlc"
+	"b30northwindapi/middleware"
 	"b30northwindapi/models"
 	"b30northwindapi/services"
 	"database/sql"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -12,29 +14,69 @@ import (
 )
 
 type CategoryController struct {
-	serviceManager *services.ServiceManager
+	storedb services.Store
 }
 
-// constructor
-func NewCategoryController(servicesManager services.ServiceManager) *CategoryController {
+func NewCategoryController(store services.Store) *CategoryController {
 	return &CategoryController{
-		serviceManager: &servicesManager,
+		storedb: store,
 	}
 }
 
-// hold data from body client request
-type categoryCreateReq struct {
-	CategoryName string  `json:"category_name" binding:"required"`
-	Description  *string `json:"description"`
+func (cate *CategoryController) GetCategoryById(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	category, err := models.Nullable(cate.storedb.FindCategoryById(c, int32(id)))
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.NewError(err))
+		return
+	}
+	if category == nil {
+		c.JSON(http.StatusNotFound, models.NewError(models.ErrCategoryNotFound))
+		return
+	}
+
+	c.JSON(http.StatusOK, category)
 }
 
-type categoryUpdateReq struct {
-	CategoryName string  `json:"category_name"`
-	Description  *string `json:"description"`
+func (cate *CategoryController) GetListCategory(c *gin.Context) {
+	categories, err := cate.storedb.FindAllCategory(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.NewError(err))
+		return
+	}
+	c.JSON(http.StatusOK, categories)
 }
 
-func (handler *CategoryController) UpdateCategory(c *gin.Context) {
-	var payload *categoryUpdateReq
+func (cate *CategoryController) PostCategory(c *gin.Context) {
+	var payload *models.CategoryPostReq
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, models.NewValidationError(err))
+		return
+	}
+
+	token, _ := middleware.GenerateJWT("cool")
+	log.Println(token)
+
+	args := db.CreateCategoryParams{
+		CategoryName: payload.CategoryName,
+		Description:  payload.Description,
+	}
+
+	category, err := cate.storedb.CreateCategory(c, args)
+	if err != nil {
+		if apiErr := models.ConvertToApiErr(err); apiErr != nil {
+			c.JSON(http.StatusUnprocessableEntity, models.NewValidationError(apiErr))
+		}
+		c.JSON(http.StatusInternalServerError, models.NewError(err))
+		return
+	}
+	c.JSON(http.StatusCreated, category)
+
+}
+
+func (cate *CategoryController) UpdateCategory(c *gin.Context) {
+	var payload *models.CategoryUpdateReq
 	cateId, _ := strconv.Atoi(c.Param("id"))
 
 	if err := c.ShouldBindJSON(&payload); err != nil {
@@ -48,19 +90,26 @@ func (handler *CategoryController) UpdateCategory(c *gin.Context) {
 		Description:  payload.Description,
 	}
 
-	category, err := handler.serviceManager.CategoryService.UpdateCategory(c, *args)
+	category, err := models.Nullable(cate.storedb.UpdateCategory(c, *args))
 	if err != nil {
+		/* 		if apiErr := models.ConvertToApiErr(err); apiErr != nil {
+			c.JSON(http.StatusUnprocessableEntity, models.NewValidationError(apiErr))
+		} */
 		c.JSON(http.StatusInternalServerError, models.NewError(err))
 		return
 	}
-	c.JSON(http.StatusCreated, category)
+	/* 	if category == nil {
+		c.JSON(http.StatusNotFound, models.NewError(err))
+		return
+	} */
+	c.JSON(http.StatusOK, category)
 
 }
 
-func (handler *CategoryController) DeleteCategory(c *gin.Context) {
+func (cate *CategoryController) DeleteCategory(c *gin.Context) {
 	cateId, _ := strconv.Atoi(c.Param("id"))
 
-	_, err := handler.serviceManager.CategoryService.FindCategoryById(c, int32(cateId))
+	_, err := cate.storedb.FindCategoryById(c, int32(cateId))
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -71,7 +120,7 @@ func (handler *CategoryController) DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	err = handler.serviceManager.CategoryService.DeleteCategory(c, int32(cateId))
+	err = cate.storedb.DeleteCategory(c, int32(cateId))
 	if err != nil {
 		if err != nil {
 			c.JSON(http.StatusNotFound, models.ErrDataNotFound)
@@ -81,49 +130,4 @@ func (handler *CategoryController) DeleteCategory(c *gin.Context) {
 	}
 	c.JSON(http.StatusNoContent, gin.H{"status": "success", "message": "data has been deleted"})
 
-}
-
-func (handler *CategoryController) GetCategoryById(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	category, err := handler.serviceManager.CategoryService.FindCategoryById(c, int32(id))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.NewError(err))
-		return
-	}
-	c.JSON(http.StatusOK, category)
-}
-
-// create category
-func (handler *CategoryController) CreateCategory(c *gin.Context) {
-	var payload *categoryCreateReq
-
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		//c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "fail", "message": err})
-		c.JSON(http.StatusUnprocessableEntity, models.NewValidationError(err))
-		return
-	}
-
-	args := db.CreateCategoryParams{
-		CategoryName: payload.CategoryName,
-		Description:  payload.Description,
-	}
-
-	category, err := handler.serviceManager.CategoryService.CreateCategory(c, args)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.NewError(err))
-		return
-	}
-
-	c.JSON(http.StatusCreated, category)
-
-}
-
-// get list category
-func (handler *CategoryController) GetListCategory(c *gin.Context) {
-	categories, err := handler.serviceManager.CategoryService.FindAllCategory(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrDataNotFound)
-	}
-
-	c.JSON(http.StatusOK, categories)
 }

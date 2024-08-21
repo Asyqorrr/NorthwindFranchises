@@ -30,7 +30,7 @@ UPDATE products
 	SET  product_name=$1, supplier_id=$2, category_id=$3, 
 	quantity_per_unit=$4, unit_price=$5, units_in_stock=$6, 
 	units_on_order=$7, reorder_level=$8, discontinued=$9,product_image=$10
-	WHERE product_id=$10
+	WHERE product_id=$11
 	RETURNING *;
 
 -- name: DeleteProduct :exec

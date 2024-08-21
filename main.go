@@ -1,32 +1,34 @@
 package main
 
 import (
-	"b30northwindapi/api/handlers"
-	"b30northwindapi/config"
-	db "b30northwindapi/db/sqlc"
-	"b30northwindapi/server"
 	"log"
 	"os"
+
+	"b30northwindapi/config"
+	"b30northwindapi/controller"
+	"b30northwindapi/server"
+	"b30northwindapi/services"
 )
 
 func main() {
-	log.Println("Starting Northwind API")
+	log.Println("Starting Northwind App")
+	log.Println("Initializing configuration")
 
-	log.Println("Initialiazing Configuration")
-	config := config.InitConfig(getConfigFileName())
-
+	config := config.LoadConfig(getConfigFileName(), ".")
 	log.Println("Initializing database")
-	dbHandler := server.InitDatabase(config)
+	dbConnection := server.InitDatabase(&config)
+	defer server.Close(dbConnection)
 
-	//call store, replace service
-	store := db.NewStoreManager(dbHandler)
+	store := services.NewStoreManager(dbConnection)
 
-	handlerCtrl := handlers.NewHandlerManager(store)
+	handlerCtrl := controller.NewControllerManager(store)
 
-	router := server.CreateRouter(handlerCtrl)
+	router := server.CreateRouter(handlerCtrl, "dev")
 
 	log.Println("Initializig HTTP sever")
-	httpServer := server.NewHttpServer(config, store, router)
+	//httpServer := server.InitHttpServer(config, router)
+
+	httpServer := server.NewHttpServer(&config, store, router)
 
 	httpServer.Start()
 

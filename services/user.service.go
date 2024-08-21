@@ -2,71 +2,50 @@ package services
 
 import (
 	db "b30northwindapi/db/sqlc"
+	"b30northwindapi/middleware"
 	"b30northwindapi/models"
 	"context"
-
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserService struct {
-	*db.Queries
-	*models.JWTHandler
-}
+func (sm *StoreManager) Signup(userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
+	//1. is user already signup
+	foundUser, _ := models.Nullable(sm.FindUserByUsername(context.Background(), userReq.UserName))
 
-// constructor
-func NewUserService(dbConn *pgxpool.Conn, jwt *models.JWTHandler) *UserService {
-	return &UserService{
-		Queries:    db.New(dbConn),
-		JWTHandler: jwt,
-	}
-}
-
-func (us *UserService) Signup(userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
-	//1. check is user already registered
-	foundUser, _ := us.FindUserByUsername(context.Background(), &userReq.UserName)
-
-	//2. already registered
 	if foundUser.UserID != 0 {
-		return &models.UserResponse{}, models.NewError(models.ErrDataNotFound)
+		return &models.UserResponse{}, models.NewError(models.ErrUserAlreadyExist)
 	}
 
-	//3. belum signup
-	args := &db.CreateUserParams{
-		UserName:     &userReq.UserName,
+	// user not exist
+	argCreateUser := db.CreateUserParams{
+		UserName:     userReq.UserName,
 		UserPassword: userReq.UserPassword,
 	}
-
-	newUser, err := us.CreateUser(context.Background(), *args)
+	newUser, err := sm.CreateUser(context.Background(), argCreateUser)
 	if err != nil {
 		return &models.UserResponse{}, models.NewError(err)
 	}
 
 	response := &models.UserResponse{
-		UserID:    newUser.UserID,
-		UserName:  newUser.UserName,
-		UserPhone: newUser.UserPhone,
+		UserID:       newUser.UserID,
+		UserPassword: newUser.UserPassword,
+		UserPhone:    newUser.UserPhone,
 	}
-
 	return response, nil
-
 }
 
-func (us UserService) Signin(userReq models.CreateUserReq) (*models.UserResponse,
-	*models.Error) {
-
+func (sm *StoreManager) Signin(userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
 	args := &db.FindUserByUserPasswordParams{
-		UserName:     &userReq.UserName,
+		UserName:     userReq.UserName,
 		UserPassword: userReq.UserPassword,
 	}
 
-	foundUser, _ := us.FindUserByUserPassword(context.Background(), *args)
+	foundUser, _ := sm.FindUserByUserPassword(context.Background(), *args)
 
 	if foundUser.UserID == 0 {
 		return &models.UserResponse{}, models.NewError(models.ErrInvalidUserPassword)
 	}
 
-	accessToken, error := us.JWTHandler.GenerateJWT(*foundUser.UserName)
+	accessToken, error := middleware.GenerateJWT(*foundUser.UserName)
 
 	if error != nil {
 		return &models.UserResponse{},
@@ -78,8 +57,7 @@ func (us UserService) Signin(userReq models.CreateUserReq) (*models.UserResponse
 		UserToken: &accessToken,
 	}
 
-	//update to table users, update kolom user_token
-	_, err := us.UpdateToken(context.Background(), *argsUpdateToken)
+	_, err := sm.UpdateToken(context.Background(), *argsUpdateToken)
 
 	if err != nil {
 		return &models.UserResponse{},
@@ -97,9 +75,8 @@ func (us UserService) Signin(userReq models.CreateUserReq) (*models.UserResponse
 	return response, nil
 }
 
-func (us UserService) Logout(accessToken string) *models.Error {
-
-	err := us.DeleteToken(context.Background(), &accessToken)
+func (sm *StoreManager) Signout(accessToken string) *models.Error {
+	err := sm.DeleteToken(context.Background(), &accessToken)
 	if err != nil {
 		return models.NewError(models.ErrUpdateToken)
 	}
@@ -107,23 +84,12 @@ func (us UserService) Logout(accessToken string) *models.Error {
 	return nil
 }
 
-func (us UserService) GetProfileService(c *gin.Context) (*models.UserResponse, *models.Error) {
-	var userID string
-	token := us.JWTHandler.GetJWTFromHeader(c)
-	if token != "" {
-		userID = us.JWTHandler.GetIDFromToken(token)
-	}
-
-	foundUser, err := us.FindUserByUsername(context.Background(), &userID)
+/* func generateAccessToken(username string) (string, *models.Error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(username), bcrypt.DefaultCost)
 	if err != nil {
-		return &models.UserResponse{}, models.NewError(err)
+		return "", models.NewError(models.ErrFailedGenerateToken)
 	}
 
-	result := &models.UserResponse{
-		UserID:    foundUser.UserID,
-		UserName:  foundUser.UserName,
-		UserPhone: foundUser.UserPhone,
-	}
-
-	return result, nil
+	return base64.StdEncoding.EncodeToString(hash), nil
 }
+*/
