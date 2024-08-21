@@ -26,8 +26,6 @@ func main() {
 	router := server.CreateRouter(handlerCtrl, "dev")
 
 	log.Println("Initializig HTTP sever")
-	//httpServer := server.InitHttpServer(config, router)
-
 	httpServer := server.NewHttpServer(&config, store, router)
 
 	httpServer.Start()
