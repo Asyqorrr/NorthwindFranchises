@@ -1,0 +1,1 @@
+ALTER TABLE franchises_iamges RENAME to franchises_images

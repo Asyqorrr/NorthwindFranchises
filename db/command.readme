@@ -3,7 +3,7 @@ migrate create -ext sql -dir db/migrations -seq init_schema
 
 migrate create -ext sql -dir db/migrations -seq add_column_product
 
-migrate -path db/migrations -database "postgresql://postgres:admin@localhost:5432/northwind_db30?sslmode=disable" -verbose up
+migrate -path db/migrations -database "postgresql://postgres:1234@localhost:5432/Franchise?sslmode=disable" -verbose up
 
 sqlc init
 sqlc generate

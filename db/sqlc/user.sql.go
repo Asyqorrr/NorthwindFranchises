@@ -10,27 +10,33 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
+
 INSERT INTO users(user_name,user_password,user_phone)
-	VALUES
-	($1, crypt($2,gen_salt('bf')),$3)
-    RETURNING user_id, user_name, user_password, user_phone, user_role, user_token
+VALUES
+($1, crypt($2,gen_salt('bf')),$3)
+RETURNING user_id, user_name, user_password, user_email, user_phone, user_token
 `
 
 type CreateUserParams struct {
 	UserName  *string     `json:"user_name"`
-	UserPassword     *string `json:"user_password"`
+	Crypt     interface{} `json:"crypt"`
 	UserPhone *string     `json:"user_phone"`
 }
 
+// -- name: GetUserRoles :many
+// select user_id,user_name,user_password,user_phone,user_token,role_id,role_name
+// from users  join user_roles ur on user_id=usro_user_id
+// join roles  on role_id = usro_role_id
+// WHERE user_name = $1 and user_password = crypt($2, user_password);
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.UserName, arg.UserPassword, arg.UserPhone)
+	row := q.db.QueryRow(ctx, createUser, arg.UserName, arg.Crypt, arg.UserPhone)
 	var i User
 	err := row.Scan(
 		&i.UserID,
 		&i.UserName,
 		&i.UserPassword,
+		&i.UserEmail,
 		&i.UserPhone,
-		&i.UserRole,
 		&i.UserToken,
 	)
 	return &i, err
@@ -38,7 +44,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 
 const deleteToken = `-- name: DeleteToken :exec
 UPDATE users SET user_token = '' WHERE user_token = $1
-RETURNING user_id, user_name, user_password, user_phone, user_role, user_token
+RETURNING user_id, user_name, user_password, user_email, user_phone, user_token
 `
 
 func (q *Queries) DeleteToken(ctx context.Context, userToken *string) error {
@@ -81,7 +87,7 @@ WHERE user_name = $1 and user_password = crypt($2, user_password)
 
 type FindUserByUserPasswordParams struct {
 	UserName *string     `json:"user_name"`
-	UserPassword    *string `json:"user_password"`
+	Crypt    interface{} `json:"crypt"`
 }
 
 type FindUserByUserPasswordRow struct {
@@ -93,7 +99,7 @@ type FindUserByUserPasswordRow struct {
 }
 
 func (q *Queries) FindUserByUserPassword(ctx context.Context, arg FindUserByUserPasswordParams) (*FindUserByUserPasswordRow, error) {
-	row := q.db.QueryRow(ctx, findUserByUserPassword, arg.UserName, arg.UserPassword)
+	row := q.db.QueryRow(ctx, findUserByUserPassword, arg.UserName, arg.Crypt)
 	var i FindUserByUserPasswordRow
 	err := row.Scan(
 		&i.UserID,
@@ -132,59 +138,9 @@ func (q *Queries) FindUserByUsername(ctx context.Context, userName *string) (*Fi
 	return &i, err
 }
 
-const getUserRoles = `-- name: GetUserRoles :many
-select user_id,user_name,user_password,user_phone,user_token,role_id,role_name 
-from users  join user_roles ur on user_id=usro_user_id
-join roles  on role_id = usro_role_id
-WHERE user_name = $1 and user_password = crypt($2, user_password)
-`
-
-type GetUserRolesParams struct {
-	UserName *string     `json:"user_name"`
-	UserPassword    *string `json:"user_password"`
-}
-
-type GetUserRolesRow struct {
-	UserID       int32   `json:"user_id"`
-	UserName     *string `json:"user_name"`
-	UserPassword *string `json:"user_password"`
-	UserPhone    *string `json:"user_phone"`
-	UserToken    *string `json:"user_token"`
-	RoleID       int32   `json:"role_id"`
-	RoleName     *string `json:"role_name"`
-}
-
-func (q *Queries) GetUserRoles(ctx context.Context, arg GetUserRolesParams) ([]*GetUserRolesRow, error) {
-	rows, err := q.db.Query(ctx, getUserRoles, arg.UserName, arg.UserPassword)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetUserRolesRow
-	for rows.Next() {
-		var i GetUserRolesRow
-		if err := rows.Scan(
-			&i.UserID,
-			&i.UserName,
-			&i.UserPassword,
-			&i.UserPhone,
-			&i.UserToken,
-			&i.RoleID,
-			&i.RoleName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateToken = `-- name: UpdateToken :one
 UPDATE users SET user_token = $1 WHERE user_id = $2
-RETURNING user_id, user_name, user_password, user_phone, user_role, user_token
+RETURNING user_id, user_name, user_password, user_email, user_phone, user_token
 `
 
 type UpdateTokenParams struct {
@@ -199,8 +155,8 @@ func (q *Queries) UpdateToken(ctx context.Context, arg UpdateTokenParams) (*User
 		&i.UserID,
 		&i.UserName,
 		&i.UserPassword,
+		&i.UserEmail,
 		&i.UserPhone,
-		&i.UserRole,
 		&i.UserToken,
 	)
 	return &i, err
@@ -208,7 +164,7 @@ func (q *Queries) UpdateToken(ctx context.Context, arg UpdateTokenParams) (*User
 
 const updateUserName = `-- name: UpdateUserName :one
 UPDATE users SET user_name = $1 WHERE user_id = $2
-RETURNING user_id, user_name, user_password, user_phone, user_role, user_token
+RETURNING user_id, user_name, user_password, user_email, user_phone, user_token
 `
 
 type UpdateUserNameParams struct {
@@ -223,8 +179,8 @@ func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) 
 		&i.UserID,
 		&i.UserName,
 		&i.UserPassword,
+		&i.UserEmail,
 		&i.UserPhone,
-		&i.UserRole,
 		&i.UserToken,
 	)
 	return &i, err
@@ -232,7 +188,7 @@ func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) 
 
 const updateUserPhone = `-- name: UpdateUserPhone :one
 UPDATE users SET user_phone = $1 WHERE user_id = $2
-RETURNING user_id, user_name, user_password, user_phone, user_role, user_token
+RETURNING user_id, user_name, user_password, user_email, user_phone, user_token
 `
 
 type UpdateUserPhoneParams struct {
@@ -247,8 +203,8 @@ func (q *Queries) UpdateUserPhone(ctx context.Context, arg UpdateUserPhoneParams
 		&i.UserID,
 		&i.UserName,
 		&i.UserPassword,
+		&i.UserEmail,
 		&i.UserPhone,
-		&i.UserRole,
 		&i.UserToken,
 	)
 	return &i, err

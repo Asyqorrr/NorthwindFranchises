@@ -30,6 +30,7 @@ func (uc *UserController) Signup(c *gin.Context) {
 	args := &models.CreateUserReq{
 		UserName:     payload.UserName,
 		UserPassword: payload.UserPassword,
+		UserPhone: 	  payload.UserPhone,
 	}
 	user, err := uc.storedb.Signup(c, *args)
 
@@ -40,7 +41,7 @@ func (uc *UserController) Signup(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (uc *UserController) Sigin(c *gin.Context) {
+func (uc *UserController) Signin(c *gin.Context) {
 	var payload models.CreateUserReq
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, models.NewValidationError(err))

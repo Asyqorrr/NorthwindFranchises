@@ -10,36 +10,49 @@ import (
 
 type Querier interface {
 	CreateCart(ctx context.Context, arg CreateCartParams) (*Cart, error)
-	CreateCategory(ctx context.Context, arg CreateCategoryParams) (*Category, error)
-	CreateOrder(ctx context.Context, arg CreateOrderParams) (*Order, error)
-	CreateProduct(ctx context.Context, arg CreateProductParams) (*Product, error)
+	CreateCategory(ctx context.Context, cateName *string) (*Category, error)
+	CreateFranchises(ctx context.Context, arg CreateFranchisesParams) (*Franchise, error)
+	CreateOrderFranchises(ctx context.Context, arg CreateOrderFranchisesParams) (*OrderFranchise, error)
+	CreateOrderFranchisesDetail(ctx context.Context, arg CreateOrderFranchisesDetailParams) (*OrderFranchisesDetail, error)
+	// -- name: GetUserRoles :many
+	// select user_id,user_name,user_password,user_phone,user_token,role_id,role_name
+	// from users  join user_roles ur on user_id=usro_user_id
+	// join roles  on role_id = usro_role_id
+	// WHERE user_name = $1 and user_password = crypt($2, user_password);
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	DeleteCart(ctx context.Context, cartID int32) error
-	DeleteCategory(ctx context.Context, categoryID int32) error
-	DeleteOrder(ctx context.Context, orderID int16) error
-	DeleteProduct(ctx context.Context, productID int16) error
+	DeleteCategory(ctx context.Context, cateID int32) error
+	DeleteFranchises(ctx context.Context, frchID int32) error
+	DeleteImages(ctx context.Context, frimID int32) error
+	DeleteOrder(ctx context.Context, orfiID int32) error
+	DeleteOrderFranchisesDetail(ctx context.Context, ofdeID int32) error
 	DeleteToken(ctx context.Context, userToken *string) error
 	FindAllCategory(ctx context.Context) ([]*Category, error)
-	FindAllOrder(ctx context.Context) ([]*Order, error)
-	FindAllProduct(ctx context.Context) ([]*Product, error)
-	FindAllProductPaging(ctx context.Context, arg FindAllProductPagingParams) ([]*Product, error)
-	FindCartByCustomerAndProduct(ctx context.Context, arg FindCartByCustomerAndProductParams) (*FindCartByCustomerAndProductRow, error)
-	FindCartByCustomerId(ctx context.Context, customerID string) ([]*FindCartByCustomerIdRow, error)
-	FindCartByCustomerPaging(ctx context.Context, arg FindCartByCustomerPagingParams) ([]*FindCartByCustomerPagingRow, error)
-	FindCategoryById(ctx context.Context, categoryID int32) (*Category, error)
-	FindOrderById(ctx context.Context, orderID int16) (*Order, error)
-	FindProductById(ctx context.Context, productID int16) (*Product, error)
+	FindAllImages(ctx context.Context) ([]*FindAllImagesRow, error)
+	FindAllOrderFranchises(ctx context.Context) ([]*OrderFranchise, error)
+	FindAllOrderFranchisesDetail(ctx context.Context) ([]*OrderFranchisesDetail, error)
+	FindCartByCustomerAndFranchises(ctx context.Context, arg FindCartByCustomerAndFranchisesParams) (*Cart, error)
+	FindCartByCustomerId(ctx context.Context, cartUserID *int32) ([]*FindCartByCustomerIdRow, error)
+	FindCartByCustomerOrFranchises(ctx context.Context, cartUserID *int32) (*FindCartByCustomerOrFranchisesRow, error)
+	FindCartsbyId(ctx context.Context, cartID int32) (*Cart, error)
+	FindCategoryById(ctx context.Context, cateID int32) (*Category, error)
+	FindImageById(ctx context.Context, frimID int32) (*FindImageByIdRow, error)
+	FindOrderFranchisesById(ctx context.Context, orfiID int32) (*OrderFranchise, error)
+	FindOrderFranchisesDetailById(ctx context.Context, ofdeID int32) (*OrderFranchisesDetail, error)
 	FindUserByPhone(ctx context.Context, userPhone *string) (*FindUserByPhoneRow, error)
 	FindUserByUserPassword(ctx context.Context, arg FindUserByUserPasswordParams) (*FindUserByUserPasswordRow, error)
 	FindUserByUsername(ctx context.Context, userName *string) (*FindUserByUsernameRow, error)
-	GetUserRoles(ctx context.Context, arg GetUserRolesParams) ([]*GetUserRolesRow, error)
-	UpdateCartQty(ctx context.Context, arg UpdateCartQtyParams) (*Cart, error)
+	GetAllFranchises(ctx context.Context) ([]*Franchise, error)
+	GetFranchisesById(ctx context.Context, frchID int32) (*Franchise, error)
+	GetFranchisesByNameAndCateId(ctx context.Context, arg GetFranchisesByNameAndCateIdParams) (*Franchise, error)
+	UpdateCartQTY(ctx context.Context, arg UpdateCartQTYParams) (*Cart, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (*Category, error)
-	UpdateOrderShip(ctx context.Context, arg UpdateOrderShipParams) (*Order, error)
-	UpdateProduct(ctx context.Context, arg UpdateProductParams) (*Product, error)
+	UpdateImages(ctx context.Context, arg UpdateImagesParams) (*FranchisesImage, error)
+	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (*OrderFranchise, error)
 	UpdateToken(ctx context.Context, arg UpdateTokenParams) (*User, error)
 	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (*User, error)
 	UpdateUserPhone(ctx context.Context, arg UpdateUserPhoneParams) (*User, error)
+	UploadImages(ctx context.Context, arg UploadImagesParams) (*FranchisesImage, error)
 }
 
 var _ Querier = (*Queries)(nil)

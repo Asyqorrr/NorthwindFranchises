@@ -9,16 +9,17 @@ import (
 
 func (sm *StoreManager) Signup(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
 	//1. is user already signup
-	foundUser, _ := models.Nullable(sm.FindUserByUsername(ctx, userReq.UserName))
+	_, err := models.Nullable(sm.FindUserByUsername(ctx, userReq.UserName))
 
-	if foundUser.UserID != 0 {
+	if err != nil {
 		return &models.UserResponse{}, models.NewError(models.ErrUserAlreadyExist)
 	}
 
 	// user not exist
 	argCreateUser := db.CreateUserParams{
 		UserName:     userReq.UserName,
-		UserPassword: userReq.UserPassword,
+		Crypt: 		  userReq.UserPassword,
+		UserPhone:	  userReq.UserPhone,
 	}
 	newUser, err := sm.CreateUser(ctx, argCreateUser)
 	if err != nil {
@@ -36,7 +37,7 @@ func (sm *StoreManager) Signup(ctx context.Context, userReq models.CreateUserReq
 func (sm *StoreManager) Signin(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error) {
 	args := &db.FindUserByUserPasswordParams{
 		UserName:     userReq.UserName,
-		UserPassword: userReq.UserPassword,
+		Crypt: userReq.UserPassword,
 	}
 
 	foundUser, _ := sm.FindUserByUserPassword(ctx, *args)

@@ -2,7 +2,6 @@ package server
 
 import (
 	"b30northwindapi/controller"
-	"b30northwindapi/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -35,46 +34,70 @@ func CreateRouter(handlers *controller.ControllerManager, mode string) *gin.Engi
 		ctx.String(200, "Hello Gin FB")
 	})
 
+	
+	// productRoute := api.Group("/product")
+	// {
+		// 	productRoute.Use(middleware.AuthMiddleware())
+		// 	productRoute.GET("", handlers.FindAllProduct)
+		// 	productRoute.GET("/", handlers.FindAllProduct)
+		// 	productRoute.POST("/", handlers.CreateProduct)
+		// 	productRoute.GET("/:id", handlers.FindProductById)
+		// 	productRoute.DELETE("/:id", handlers.DeleteProduct)
+		// 	productRoute.GET("/paging", handlers.FindAllProductPaging)
+		// 	productRoute.POST("/uploadProductImage", handlers.UploadMultipleProductImage)
+		// 	productRoute.PUT("/:id", handlers.UpdateProduct)
+		// }
+		
+		// orderRoute := api.Group("/order")
+		// {
+		// 	productRoute.Use(middleware.AuthMiddleware())
+		// 	orderRoute.Use(middleware.AuthMiddleware())
+		// 	orderRoute.GET("/cart/:id", handlers.FindCartByCustomerId)
+		// 	orderRoute.POST("/cart/add", handlers.AddToCart)
+		// 	orderRoute.GET("/", handlers.FindAllOrder)
+		// 	orderRoute.GET("/:id", handlers.FindOrderById)
+		// 	orderRoute.POST("/", handlers.CreateOrder)
+		// }
+
+
 	categoryRoute := api.Group("/category")
 	{
-		categoryRoute.Use(middleware.AuthMiddleware())
+		// categoryRoute.Use(middleware.AuthMiddleware())
 		categoryRoute.GET("/", handlers.GetListCategory)
-		categoryRoute.POST("/", handlers.PostCategory)
+		categoryRoute.POST("/", handlers.CreateCategory)
 		categoryRoute.GET("/:id", handlers.GetCategoryById)
 		categoryRoute.PUT("/:id", handlers.UpdateCategory)
+		categoryRoute.DELETE("/:id", handlers.DeleteCategory)
 
-	}
-
-	productRoute := api.Group("/product")
-	{
-		productRoute.Use(middleware.AuthMiddleware())
-		productRoute.GET("", handlers.FindAllProduct)
-		productRoute.GET("/", handlers.FindAllProduct)
-		productRoute.POST("/", handlers.CreateProduct)
-		productRoute.GET("/:id", handlers.FindProductById)
-		productRoute.DELETE("/:id", handlers.DeleteProduct)
-		productRoute.GET("/paging", handlers.FindAllProductPaging)
-		productRoute.POST("/uploadProductImage", handlers.UploadMultipleProductImage)
-		productRoute.PUT("/:id", handlers.UpdateProduct)
-	}
-
-	orderRoute := api.Group("/order")
-	{
-		productRoute.Use(middleware.AuthMiddleware())
-		orderRoute.Use(middleware.AuthMiddleware())
-		orderRoute.GET("/cart/:id", handlers.FindCartByCustomerId)
-		orderRoute.POST("/cart/add", handlers.AddToCart)
-		orderRoute.GET("/", handlers.FindAllOrder)
-		orderRoute.GET("/:id", handlers.FindOrderById)
-		orderRoute.POST("/", handlers.CreateOrder)
 	}
 
 	userRoute := api.Group("/user")
 	{
 		userRoute.POST("/signup", handlers.Signup)
-		userRoute.POST("/signin", handlers.Sigin)
+		userRoute.POST("/signin", handlers.Signin)
 		userRoute.POST("/signout", handlers.Signout)
 		userRoute.GET("/profile", handlers.GetProfile)
+	}
+
+	franchisesRoute := api.Group("/franchises")
+	{
+		franchisesRoute.GET("/", handlers.GetAllFranchises)
+		franchisesRoute.GET("/:id", handlers.GetAllFranchisesById)
+		franchisesRoute.POST("/", handlers.CreateFranchises)
+		franchisesRoute.POST("/upload/:id", handlers.UploadImages)
+		franchisesRoute.DELETE("/:id", handlers.DeleteFranchises)
+	}
+
+	cartRoute := api.Group("/cart")
+	{
+		cartRoute.POST("/", handlers.AddToCart)
+		cartRoute.GET("/:id", handlers.FindCartByCustomerId)
+	}
+
+	orderRoute := api.Group("/order")
+	{
+		orderRoute.GET("/", handlers.FindAllOrderFranchises)
+		orderRoute.POST("/", handlers.CreateOrderFranchises)
 	}
 
 	return router

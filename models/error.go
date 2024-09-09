@@ -23,6 +23,8 @@ var (
 	/*category*/
 	ErrCategoryNameDuplicate = errors.New("Duplicate category name.")
 	ErrCategoryNotFound      = errors.New("category not found")
+	ErrFranchisesNotFound      = errors.New("franchises not found")
+	ErrOrderFranchisesNotFound = errors.New("order franchises not found")
 )
 
 type Error struct {

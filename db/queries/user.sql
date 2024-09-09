@@ -13,17 +13,17 @@ select user_id,user_name,user_password,user_phone,user_token
 from users  
 WHERE user_phone  = $1;
 
--- name: GetUserRoles :many
-select user_id,user_name,user_password,user_phone,user_token,role_id,role_name 
-from users  join user_roles ur on user_id=usro_user_id
-join roles  on role_id = usro_role_id
-WHERE user_name = $1 and user_password = crypt($2, user_password);
+-- -- name: GetUserRoles :many
+-- select user_id,user_name,user_password,user_phone,user_token,role_id,role_name 
+-- from users  join user_roles ur on user_id=usro_user_id
+-- join roles  on role_id = usro_role_id
+-- WHERE user_name = $1 and user_password = crypt($2, user_password);
 
 -- name: CreateUser :one
 INSERT INTO users(user_name,user_password,user_phone)
-	VALUES
-	($1, crypt($2,gen_salt('bf')),$3)
-    RETURNING *;
+VALUES
+($1, crypt($2,gen_salt('bf')),$3)
+RETURNING *;
 
 
 -- name: UpdateUserName :one

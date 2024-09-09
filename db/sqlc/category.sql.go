@@ -10,43 +10,31 @@ import (
 )
 
 const createCategory = `-- name: CreateCategory :one
-INSERT INTO categories(
-	 category_name, description, picture)
-	VALUES ($1, $2, $3) RETURNING category_id, category_name, description, picture
+INSERT INTO category(
+	 cate_name)
+	VALUES ($1) RETURNING cate_id, cate_name
 `
 
-type CreateCategoryParams struct {
-	CategoryName string  `json:"category_name"`
-	Description  *string `json:"description"`
-	Picture      []byte  `json:"picture"`
-}
-
-func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (*Category, error) {
-	row := q.db.QueryRow(ctx, createCategory, arg.CategoryName, arg.Description, arg.Picture)
+func (q *Queries) CreateCategory(ctx context.Context, cateName *string) (*Category, error) {
+	row := q.db.QueryRow(ctx, createCategory, cateName)
 	var i Category
-	err := row.Scan(
-		&i.CategoryID,
-		&i.CategoryName,
-		&i.Description,
-		&i.Picture,
-	)
+	err := row.Scan(&i.CateID, &i.CateName)
 	return &i, err
 }
 
 const deleteCategory = `-- name: DeleteCategory :exec
-DELETE FROM categories
-	WHERE category_id=$1
-    RETURNING category_id, category_name, description, picture
+DELETE FROM category
+	WHERE cate_id=$1
+    RETURNING cate_id, cate_name
 `
 
-func (q *Queries) DeleteCategory(ctx context.Context, categoryID int32) error {
-	_, err := q.db.Exec(ctx, deleteCategory, categoryID)
+func (q *Queries) DeleteCategory(ctx context.Context, cateID int32) error {
+	_, err := q.db.Exec(ctx, deleteCategory, cateID)
 	return err
 }
 
 const findAllCategory = `-- name: FindAllCategory :many
-SELECT category_id, category_name, description, picture
-	FROM categories
+SELECT cate_id, cate_name FROM category
 `
 
 func (q *Queries) FindAllCategory(ctx context.Context) ([]*Category, error) {
@@ -58,12 +46,7 @@ func (q *Queries) FindAllCategory(ctx context.Context) ([]*Category, error) {
 	var items []*Category
 	for rows.Next() {
 		var i Category
-		if err := rows.Scan(
-			&i.CategoryID,
-			&i.CategoryName,
-			&i.Description,
-			&i.Picture,
-		); err != nil {
+		if err := rows.Scan(&i.CateID, &i.CateName); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -75,49 +58,32 @@ func (q *Queries) FindAllCategory(ctx context.Context) ([]*Category, error) {
 }
 
 const findCategoryById = `-- name: FindCategoryById :one
-SELECT category_id, category_name, description, picture
-	FROM categorieS WHERE category_id=$1
+SELECT cate_id, cate_name
+	FROM category WHERE cate_id=$1
 `
 
-func (q *Queries) FindCategoryById(ctx context.Context, categoryID int32) (*Category, error) {
-	row := q.db.QueryRow(ctx, findCategoryById, categoryID)
+func (q *Queries) FindCategoryById(ctx context.Context, cateID int32) (*Category, error) {
+	row := q.db.QueryRow(ctx, findCategoryById, cateID)
 	var i Category
-	err := row.Scan(
-		&i.CategoryID,
-		&i.CategoryName,
-		&i.Description,
-		&i.Picture,
-	)
+	err := row.Scan(&i.CateID, &i.CateName)
 	return &i, err
 }
 
 const updateCategory = `-- name: UpdateCategory :one
-UPDATE categories
-	SET category_name=$2, description=$3, picture=$4
-	WHERE category_id=$1    
-    RETURNING category_id, category_name, description, picture
+UPDATE category
+	SET cate_name=$2
+	WHERE cate_id=$1    
+    RETURNING cate_id, cate_name
 `
 
 type UpdateCategoryParams struct {
-	CategoryID   int32   `json:"category_id"`
-	CategoryName string  `json:"category_name"`
-	Description  *string `json:"description"`
-	Picture      []byte  `json:"picture"`
+	CateID   int32   `json:"cate_id"`
+	CateName *string `json:"cate_name"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (*Category, error) {
-	row := q.db.QueryRow(ctx, updateCategory,
-		arg.CategoryID,
-		arg.CategoryName,
-		arg.Description,
-		arg.Picture,
-	)
+	row := q.db.QueryRow(ctx, updateCategory, arg.CateID, arg.CateName)
 	var i Category
-	err := row.Scan(
-		&i.CategoryID,
-		&i.CategoryName,
-		&i.Description,
-		&i.Picture,
-	)
+	err := row.Scan(&i.CateID, &i.CateName)
 	return &i, err
 }

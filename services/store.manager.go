@@ -11,7 +11,7 @@ import (
 //go:generate go run -mod=mod github.com/golang/mock/mockgen  -destination=./mocks/mock_store.go -build_flags=-mod=mod -package=mocks . Store
 type Store interface {
 	db.Querier
-	CreateOrderTx(ctx context.Context, args db.CreateOrderParams) (*db.Order, error)
+	CreateOrderTx(ctx context.Context, args db.CreateOrderFranchisesParams) (*models.OrderFranchiseDetailsObj, error)
 	Signup(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error)
 	Signin(ctx context.Context, userReq models.CreateUserReq) (*models.UserResponse, *models.Error)
 	Signout(ctx context.Context, accessToken string) *models.Error

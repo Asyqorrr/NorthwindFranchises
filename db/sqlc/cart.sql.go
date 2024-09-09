@@ -12,44 +12,58 @@ import (
 )
 
 const createCart = `-- name: CreateCart :one
-INSERT INTO carts(
-	customer_id,product_id,unit_price,qty,cart_created_on)
-	VALUES ($1, $2, $3, $4, $5)
-	RETURNING cart_id, customer_id, product_id, unit_price, qty, cart_created_on
+INSERT INTO public.cart(cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    RETURNING cart_id, cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id
 `
 
 type CreateCartParams struct {
-	CustomerID    string      `json:"customer_id"`
-	ProductID     int32       `json:"product_id"`
-	UnitPrice     *float32    `json:"unit_price"`
-	Qty           *int32      `json:"qty"`
-	CartCreatedOn pgtype.Date `json:"cart_created_on"`
+	CartUserID     *int32           `json:"cart_user_id"`
+	CartFrID       *int32           `json:"cart_fr_id"`
+	CartStartDate  pgtype.Timestamp `json:"cart_start_date"`
+	CartEndDate    pgtype.Timestamp `json:"cart_end_date"`
+	CartQty        *int32           `json:"cart_qty"`
+	CartPrice      *float64         `json:"cart_price"`
+	CartTotalPrice *float64         `json:"cart_total_price"`
+	CartModified   pgtype.Timestamp `json:"cart_modified"`
+	CartStatus     *string          `json:"cart_status"`
+	CartCartID     *int32           `json:"cart_cart_id"`
 }
 
 func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (*Cart, error) {
 	row := q.db.QueryRow(ctx, createCart,
-		arg.CustomerID,
-		arg.ProductID,
-		arg.UnitPrice,
-		arg.Qty,
-		arg.CartCreatedOn,
+		arg.CartUserID,
+		arg.CartFrID,
+		arg.CartStartDate,
+		arg.CartEndDate,
+		arg.CartQty,
+		arg.CartPrice,
+		arg.CartTotalPrice,
+		arg.CartModified,
+		arg.CartStatus,
+		arg.CartCartID,
 	)
 	var i Cart
 	err := row.Scan(
 		&i.CartID,
-		&i.CustomerID,
-		&i.ProductID,
-		&i.UnitPrice,
-		&i.Qty,
-		&i.CartCreatedOn,
+		&i.CartUserID,
+		&i.CartFrID,
+		&i.CartStartDate,
+		&i.CartEndDate,
+		&i.CartQty,
+		&i.CartPrice,
+		&i.CartTotalPrice,
+		&i.CartModified,
+		&i.CartStatus,
+		&i.CartCartID,
 	)
 	return &i, err
 }
 
 const deleteCart = `-- name: DeleteCart :exec
-DELETE FROM carts
-	WHERE cart_id=$1
-    RETURNING cart_id, customer_id, product_id, unit_price, qty, cart_created_on
+DELETE FROM public.cart 
+    WHERE cart_id = $1
+    RETURNING cart_id, cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id
 `
 
 func (q *Queries) DeleteCart(ctx context.Context, cartID int32) error {
@@ -57,65 +71,64 @@ func (q *Queries) DeleteCart(ctx context.Context, cartID int32) error {
 	return err
 }
 
-const findCartByCustomerAndProduct = `-- name: FindCartByCustomerAndProduct :one
-SELECT cart_id,customer_id,product_id,unit_price,qty,(unit_price*qty)::decimal(18,2) as price,cart_created_on 
-FROM carts WHERE customer_id=$1 and product_id=$2 LIMIT 1
+const findCartByCustomerAndFranchises = `-- name: FindCartByCustomerAndFranchises :one
+SELECT cart_id, cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, 
+	cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id
+    FROM cart
+    WHERE cart_user_id = $1 and cart_fr_id = $2 LIMIT 1
 `
 
-type FindCartByCustomerAndProductParams struct {
-	CustomerID string `json:"customer_id"`
-	ProductID  int32  `json:"product_id"`
+type FindCartByCustomerAndFranchisesParams struct {
+	CartUserID *int32 `json:"cart_user_id"`
+	CartFrID   *int32 `json:"cart_fr_id"`
 }
 
-type FindCartByCustomerAndProductRow struct {
-	CartID        int32          `json:"cart_id"`
-	CustomerID    string         `json:"customer_id"`
-	ProductID     int32          `json:"product_id"`
-	UnitPrice     *float32       `json:"unit_price"`
-	Qty           *int32         `json:"qty"`
-	Price         pgtype.Numeric `json:"price"`
-	CartCreatedOn pgtype.Date    `json:"cart_created_on"`
-}
-
-func (q *Queries) FindCartByCustomerAndProduct(ctx context.Context, arg FindCartByCustomerAndProductParams) (*FindCartByCustomerAndProductRow, error) {
-	row := q.db.QueryRow(ctx, findCartByCustomerAndProduct, arg.CustomerID, arg.ProductID)
-	var i FindCartByCustomerAndProductRow
+func (q *Queries) FindCartByCustomerAndFranchises(ctx context.Context, arg FindCartByCustomerAndFranchisesParams) (*Cart, error) {
+	row := q.db.QueryRow(ctx, findCartByCustomerAndFranchises, arg.CartUserID, arg.CartFrID)
+	var i Cart
 	err := row.Scan(
 		&i.CartID,
-		&i.CustomerID,
-		&i.ProductID,
-		&i.UnitPrice,
-		&i.Qty,
-		&i.Price,
-		&i.CartCreatedOn,
+		&i.CartUserID,
+		&i.CartFrID,
+		&i.CartStartDate,
+		&i.CartEndDate,
+		&i.CartQty,
+		&i.CartPrice,
+		&i.CartTotalPrice,
+		&i.CartModified,
+		&i.CartStatus,
+		&i.CartCartID,
 	)
 	return &i, err
 }
 
 const findCartByCustomerId = `-- name: FindCartByCustomerId :many
-select cart_id,cu.customer_id,company_name,pr.product_id,product_name,cr.unit_price,
-cr.unit_price,qty,(cr.unit_price*cr.qty)::decimal(18,2) as price,cart_created_on 
-from carts cr 
-join customers cu on cr.customer_id=cu.customer_id
-join products pr on cr.product_id=pr.product_id
-where cu.customer_id=$1
+SELECT c.cart_id, cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, 
+	cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id, u.user_name, fr.frch_name
+	FROM public.cart c
+	JOIN users u ON c.cart_user_id = u.user_id
+	JOIN franchises fr ON c.cart_fr_id = fr.frch_id
+    WHERE c.cart_user_id = $1
 `
 
 type FindCartByCustomerIdRow struct {
-	CartID        int32          `json:"cart_id"`
-	CustomerID    string         `json:"customer_id"`
-	CompanyName   string         `json:"company_name"`
-	ProductID     int16          `json:"product_id"`
-	ProductName   string         `json:"product_name"`
-	UnitPrice     *float32       `json:"unit_price"`
-	UnitPrice_2   *float32       `json:"unit_price_2"`
-	Qty           *int32         `json:"qty"`
-	Price         pgtype.Numeric `json:"price"`
-	CartCreatedOn pgtype.Date    `json:"cart_created_on"`
+	CartID         int32            `json:"cart_id"`
+	CartUserID     *int32           `json:"cart_user_id"`
+	CartFrID       *int32           `json:"cart_fr_id"`
+	CartStartDate  pgtype.Timestamp `json:"cart_start_date"`
+	CartEndDate    pgtype.Timestamp `json:"cart_end_date"`
+	CartQty        *int32           `json:"cart_qty"`
+	CartPrice      *float64         `json:"cart_price"`
+	CartTotalPrice *float64         `json:"cart_total_price"`
+	CartModified   pgtype.Timestamp `json:"cart_modified"`
+	CartStatus     *string          `json:"cart_status"`
+	CartCartID     *int32           `json:"cart_cart_id"`
+	UserName       *string          `json:"user_name"`
+	FrchName       *string          `json:"frch_name"`
 }
 
-func (q *Queries) FindCartByCustomerId(ctx context.Context, customerID string) ([]*FindCartByCustomerIdRow, error) {
-	rows, err := q.db.Query(ctx, findCartByCustomerId, customerID)
+func (q *Queries) FindCartByCustomerId(ctx context.Context, cartUserID *int32) ([]*FindCartByCustomerIdRow, error) {
+	rows, err := q.db.Query(ctx, findCartByCustomerId, cartUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -125,15 +138,18 @@ func (q *Queries) FindCartByCustomerId(ctx context.Context, customerID string) (
 		var i FindCartByCustomerIdRow
 		if err := rows.Scan(
 			&i.CartID,
-			&i.CustomerID,
-			&i.CompanyName,
-			&i.ProductID,
-			&i.ProductName,
-			&i.UnitPrice,
-			&i.UnitPrice_2,
-			&i.Qty,
-			&i.Price,
-			&i.CartCreatedOn,
+			&i.CartUserID,
+			&i.CartFrID,
+			&i.CartStartDate,
+			&i.CartEndDate,
+			&i.CartQty,
+			&i.CartPrice,
+			&i.CartTotalPrice,
+			&i.CartModified,
+			&i.CartStatus,
+			&i.CartCartID,
+			&i.UserName,
+			&i.FrchName,
 		); err != nil {
 			return nil, err
 		}
@@ -145,80 +161,105 @@ func (q *Queries) FindCartByCustomerId(ctx context.Context, customerID string) (
 	return items, nil
 }
 
-const findCartByCustomerPaging = `-- name: FindCartByCustomerPaging :many
-SELECT cart_id,customer_id,product_id,unit_price,qty,(unit_price*qty)::decimal(18,2) as price,cart_created_on
-FROM carts
-WHERE customer_id=$1
-ORDER BY cart_id
-LIMIT $2 OFFSET $3
+const findCartByCustomerOrFranchises = `-- name: FindCartByCustomerOrFranchises :one
+SELECT c.cart_id, cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, 
+	cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id, u.user_name, fr.frch_name
+	FROM public.cart c
+	JOIN users u ON c.cart_user_id = u.user_id
+	JOIN franchises fr ON c.cart_fr_id = fr.frch_id
+    WHERE c.cart_user_id = $1 OR fr.frch_name = $1
 `
 
-type FindCartByCustomerPagingParams struct {
-	CustomerID string `json:"customer_id"`
-	Limit      int32  `json:"limit"`
-	Offset     int32  `json:"offset"`
+type FindCartByCustomerOrFranchisesRow struct {
+	CartID         int32            `json:"cart_id"`
+	CartUserID     *int32           `json:"cart_user_id"`
+	CartFrID       *int32           `json:"cart_fr_id"`
+	CartStartDate  pgtype.Timestamp `json:"cart_start_date"`
+	CartEndDate    pgtype.Timestamp `json:"cart_end_date"`
+	CartQty        *int32           `json:"cart_qty"`
+	CartPrice      *float64         `json:"cart_price"`
+	CartTotalPrice *float64         `json:"cart_total_price"`
+	CartModified   pgtype.Timestamp `json:"cart_modified"`
+	CartStatus     *string          `json:"cart_status"`
+	CartCartID     *int32           `json:"cart_cart_id"`
+	UserName       *string          `json:"user_name"`
+	FrchName       *string          `json:"frch_name"`
 }
 
-type FindCartByCustomerPagingRow struct {
-	CartID        int32          `json:"cart_id"`
-	CustomerID    string         `json:"customer_id"`
-	ProductID     int32          `json:"product_id"`
-	UnitPrice     *float32       `json:"unit_price"`
-	Qty           *int32         `json:"qty"`
-	Price         pgtype.Numeric `json:"price"`
-	CartCreatedOn pgtype.Date    `json:"cart_created_on"`
+func (q *Queries) FindCartByCustomerOrFranchises(ctx context.Context, cartUserID *int32) (*FindCartByCustomerOrFranchisesRow, error) {
+	row := q.db.QueryRow(ctx, findCartByCustomerOrFranchises, cartUserID)
+	var i FindCartByCustomerOrFranchisesRow
+	err := row.Scan(
+		&i.CartID,
+		&i.CartUserID,
+		&i.CartFrID,
+		&i.CartStartDate,
+		&i.CartEndDate,
+		&i.CartQty,
+		&i.CartPrice,
+		&i.CartTotalPrice,
+		&i.CartModified,
+		&i.CartStatus,
+		&i.CartCartID,
+		&i.UserName,
+		&i.FrchName,
+	)
+	return &i, err
 }
 
-func (q *Queries) FindCartByCustomerPaging(ctx context.Context, arg FindCartByCustomerPagingParams) ([]*FindCartByCustomerPagingRow, error) {
-	rows, err := q.db.Query(ctx, findCartByCustomerPaging, arg.CustomerID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*FindCartByCustomerPagingRow
-	for rows.Next() {
-		var i FindCartByCustomerPagingRow
-		if err := rows.Scan(
-			&i.CartID,
-			&i.CustomerID,
-			&i.ProductID,
-			&i.UnitPrice,
-			&i.Qty,
-			&i.Price,
-			&i.CartCreatedOn,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateCartQty = `-- name: UpdateCartQty :one
-UPDATE carts
-	SET qty=$1
-	WHERE cart_id=$2
-	RETURNING cart_id, customer_id, product_id, unit_price, qty, cart_created_on
+const findCartsbyId = `-- name: FindCartsbyId :one
+SELECT cart_id, cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, 
+	cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id
+    FROM cart
+    WHERE cart_id = $1
 `
 
-type UpdateCartQtyParams struct {
-	Qty    *int32 `json:"qty"`
-	CartID int32  `json:"cart_id"`
-}
-
-func (q *Queries) UpdateCartQty(ctx context.Context, arg UpdateCartQtyParams) (*Cart, error) {
-	row := q.db.QueryRow(ctx, updateCartQty, arg.Qty, arg.CartID)
+func (q *Queries) FindCartsbyId(ctx context.Context, cartID int32) (*Cart, error) {
+	row := q.db.QueryRow(ctx, findCartsbyId, cartID)
 	var i Cart
 	err := row.Scan(
 		&i.CartID,
-		&i.CustomerID,
-		&i.ProductID,
-		&i.UnitPrice,
-		&i.Qty,
-		&i.CartCreatedOn,
+		&i.CartUserID,
+		&i.CartFrID,
+		&i.CartStartDate,
+		&i.CartEndDate,
+		&i.CartQty,
+		&i.CartPrice,
+		&i.CartTotalPrice,
+		&i.CartModified,
+		&i.CartStatus,
+		&i.CartCartID,
+	)
+	return &i, err
+}
+
+const updateCartQTY = `-- name: UpdateCartQTY :one
+UPDATE public.cart 
+    SET cart_qty = $1 
+    WHERE cart_id = $2 
+    RETURNING cart_id, cart_user_id, cart_fr_id, cart_start_date, cart_end_date, cart_qty, cart_price, cart_total_price, cart_modified, cart_status, cart_cart_id
+`
+
+type UpdateCartQTYParams struct {
+	CartQty *int32 `json:"cart_qty"`
+	CartID  int32  `json:"cart_id"`
+}
+
+func (q *Queries) UpdateCartQTY(ctx context.Context, arg UpdateCartQTYParams) (*Cart, error) {
+	row := q.db.QueryRow(ctx, updateCartQTY, arg.CartQty, arg.CartID)
+	var i Cart
+	err := row.Scan(
+		&i.CartID,
+		&i.CartUserID,
+		&i.CartFrID,
+		&i.CartStartDate,
+		&i.CartEndDate,
+		&i.CartQty,
+		&i.CartPrice,
+		&i.CartTotalPrice,
+		&i.CartModified,
+		&i.CartStatus,
+		&i.CartCartID,
 	)
 	return &i, err
 }

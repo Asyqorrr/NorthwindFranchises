@@ -23,6 +23,18 @@ func NewCategoryController(store services.Store) *CategoryController {
 	}
 }
 
+
+// GetCategoryById godoc
+// @summary		GetCategoryById
+// @Description	GetCategoryById
+// @Tags			category
+// @Accept			json
+// @Produce		json
+// @Param			id	path	int		false	"category id"
+// @Success		200		{object} 	map[string]interface{}
+// @Failure		500		{} 			http.StatusInternalServerError
+// @Failure		404		{}			http.StatusNotFound
+// @Router			/category/{id}	[get]
 func (cate *CategoryController) GetCategoryById(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	category, err := models.Nullable(cate.storedb.FindCategoryById(c, int32(id)))
@@ -39,6 +51,17 @@ func (cate *CategoryController) GetCategoryById(c *gin.Context) {
 	c.JSON(http.StatusOK, category)
 }
 
+// GetListCategory godoc
+// @summary		List Category
+// @Description	get category
+// @Tags			category
+// @Accept			json
+// @Produce		json
+// @Success		200		{object} 	map[string]interface{}
+// @Failure		500		{} 			http.StatusInternalServerError
+// @Failure		404		{}			http.StatusNotFound
+// @Security	Bearer
+// @Router			/category 		[get]
 func (cate *CategoryController) GetListCategory(c *gin.Context) {
 	categories, err := cate.storedb.FindAllCategory(c)
 	if err != nil {
@@ -48,7 +71,19 @@ func (cate *CategoryController) GetListCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, categories)
 }
 
-func (cate *CategoryController) PostCategory(c *gin.Context) {
+// CreateCategory godoc
+// @summary		Create New Category
+// @Description	Create New Category
+// @Tags			category
+// @Accept			json
+// @Produce		json
+// @Param			category	body	models.CategoryPostReq	true	"category"
+// @Success		201		{object} 	map[string]interface{}
+// @Failure		422		{} 			http.StatusUnprocessableEntity
+// @Failure		500		{}			http.StatusInternalServerError
+// @Security	Bearer
+// @Router			/category 			[post]
+func (cate *CategoryController) CreateCategory(c *gin.Context) {
 	var payload *models.CategoryPostReq
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, models.NewValidationError(err))
@@ -58,10 +93,7 @@ func (cate *CategoryController) PostCategory(c *gin.Context) {
 	token, _ := middleware.GenerateJWT("cool")
 	log.Println(token)
 
-	args := db.CreateCategoryParams{
-		CategoryName: payload.CategoryName,
-		Description:  payload.Description,
-	}
+	args := &payload.CategoryName
 
 	category, err := cate.storedb.CreateCategory(c, args)
 	if err != nil {
@@ -75,6 +107,20 @@ func (cate *CategoryController) PostCategory(c *gin.Context) {
 
 }
 
+// UpdateCategory godoc
+// @summary		Update Category
+// @Description	Update Category
+// @Tags			category
+// @Accept			json
+// @Produce		json
+// @Param			id			path	int							false	"category id"
+// @Param			category	body	models.CategoryUpdateReq	true	"category"
+// @Success		201		{object} 	map[string]interface{}
+// @Failure		422		{} 			http.StatusUnprocessableEntity
+// @Failure		500		{}			http.StatusInternalServerError
+// @Failure		404		{}			http.StatusNotFound
+// @Security		Bearer
+// @Router			/category/{id} 		[put]
 func (cate *CategoryController) UpdateCategory(c *gin.Context) {
 	var payload *models.CategoryUpdateReq
 	cateId, _ := strconv.Atoi(c.Param("id"))
@@ -85,9 +131,8 @@ func (cate *CategoryController) UpdateCategory(c *gin.Context) {
 	}
 
 	args := &db.UpdateCategoryParams{
-		CategoryID:   int32(cateId),
-		CategoryName: payload.CategoryName,
-		Description:  payload.Description,
+		CateID:   int32(cateId),
+		CateName: &payload.CategoryName,
 	}
 
 	category, err := models.Nullable(cate.storedb.UpdateCategory(c, *args))

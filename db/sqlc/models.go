@@ -9,136 +9,68 @@ import (
 )
 
 type Cart struct {
-	CartID        int32       `json:"cart_id"`
-	CustomerID    string      `json:"customer_id"`
-	ProductID     int32       `json:"product_id"`
-	UnitPrice     *float32    `json:"unit_price"`
-	Qty           *int32      `json:"qty"`
-	CartCreatedOn pgtype.Date `json:"cart_created_on"`
+	CartID         int32            `json:"cart_id"`
+	CartUserID     *int32           `json:"cart_user_id"`
+	CartFrID       *int32           `json:"cart_fr_id"`
+	CartStartDate  pgtype.Timestamp `json:"cart_start_date"`
+	CartEndDate    pgtype.Timestamp `json:"cart_end_date"`
+	CartQty        *int32           `json:"cart_qty"`
+	CartPrice      *float64         `json:"cart_price"`
+	CartTotalPrice *float64         `json:"cart_total_price"`
+	CartModified   pgtype.Timestamp `json:"cart_modified"`
+	CartStatus     *string          `json:"cart_status"`
+	CartCartID     *int32           `json:"cart_cart_id"`
 }
 
 type Category struct {
-	CategoryID   int32   `json:"category_id"`
-	CategoryName string  `json:"category_name"`
-	Description  *string `json:"description"`
-	Picture      []byte  `json:"picture"`
+	CateID   int32   `json:"cate_id"`
+	CateName *string `json:"cate_name"`
 }
 
-type Customer struct {
-	CustomerID   string  `json:"customer_id"`
-	CompanyName  string  `json:"company_name"`
-	ContactName  *string `json:"contact_name"`
-	ContactTitle *string `json:"contact_title"`
-	Address      *string `json:"address"`
-	City         *string `json:"city"`
-	Region       *string `json:"region"`
-	PostalCode   *string `json:"postal_code"`
-	Country      *string `json:"country"`
-	Phone        *string `json:"phone"`
-	Fax          *string `json:"fax"`
+type Franchise struct {
+	FrchID          int32            `json:"frch_id"`
+	FrchName        *string          `json:"frch_name"`
+	FrchDesc        *string          `json:"frch_desc"`
+	FrchPriceBuyout *float64         `json:"frch_price_buyout"`
+	FrchPriceYearly *float64         `json:"frch_price_yearly"`
+	FrchModified    pgtype.Timestamp `json:"frch_modified"`
+	FrchCateID      *int32           `json:"frch_cate_id"`
 }
 
-type Employee struct {
-	EmployeeID      int16       `json:"employee_id"`
-	LastName        string      `json:"last_name"`
-	FirstName       string      `json:"first_name"`
-	Title           *string     `json:"title"`
-	TitleOfCourtesy *string     `json:"title_of_courtesy"`
-	BirthDate       pgtype.Date `json:"birth_date"`
-	HireDate        pgtype.Date `json:"hire_date"`
-	Address         *string     `json:"address"`
-	City            *string     `json:"city"`
-	Region          *string     `json:"region"`
-	PostalCode      *string     `json:"postal_code"`
-	Country         *string     `json:"country"`
-	HomePhone       *string     `json:"home_phone"`
-	Extension       *string     `json:"extension"`
-	Photo           []byte      `json:"photo"`
-	Notes           *string     `json:"notes"`
-	ReportsTo       *int16      `json:"reports_to"`
-	PhotoPath       *string     `json:"photo_path"`
+type FranchisesImage struct {
+	FrimID       int32   `json:"frim_id"`
+	FrimFilename *string `json:"frim_filename"`
+	FrimDefault  *string `json:"frim_default"`
+	FrimFrchID   *int32  `json:"frim_frch_id"`
 }
 
-type Order struct {
-	OrderID        int16       `json:"order_id"`
-	CustomerID     *string     `json:"customer_id"`
-	EmployeeID     *int16      `json:"employee_id"`
-	OrderDate      pgtype.Date `json:"order_date"`
-	RequiredDate   pgtype.Date `json:"required_date"`
-	ShippedDate    pgtype.Date `json:"shipped_date"`
-	ShipVia        *int16      `json:"ship_via"`
-	Freight        *float32    `json:"freight"`
-	ShipName       *string     `json:"ship_name"`
-	ShipAddress    *string     `json:"ship_address"`
-	ShipCity       *string     `json:"ship_city"`
-	ShipRegion     *string     `json:"ship_region"`
-	ShipPostalCode *string     `json:"ship_postal_code"`
-	ShipCountry    *string     `json:"ship_country"`
+type OrderFranchise struct {
+	OrfiID         int32       `json:"orfi_id"`
+	OrfiPurchaseNo *string     `json:"orfi_purchase_no"`
+	OrfiTax        *float64    `json:"orfi_tax"`
+	OrfiSubtotal   *float64    `json:"orfi_subtotal"`
+	OrfiPatrxNo    *string     `json:"orfi_patrx_no"`
+	OrfiType       *string     `json:"orfi_type"`
+	OrfiModified   pgtype.Date `json:"orfi_modified"`
+	OrfiUserID     *int32      `json:"orfi_user_id"`
 }
 
-type OrderDetail struct {
-	OrderID   int16   `json:"order_id"`
-	ProductID int16   `json:"product_id"`
-	UnitPrice float32 `json:"unit_price"`
-	Quantity  int16   `json:"quantity"`
-	Discount  float32 `json:"discount"`
-}
-
-type Product struct {
-	ProductID       int16    `json:"product_id"`
-	ProductName     string   `json:"product_name"`
-	SupplierID      *int16   `json:"supplier_id"`
-	CategoryID      *int16   `json:"category_id"`
-	QuantityPerUnit *string  `json:"quantity_per_unit"`
-	UnitPrice       *float32 `json:"unit_price"`
-	UnitsInStock    *int16   `json:"units_in_stock"`
-	UnitsOnOrder    *int16   `json:"units_on_order"`
-	ReorderLevel    *int16   `json:"reorder_level"`
-	Discontinued    int32    `json:"discontinued"`
-	ProductImage    *string  `json:"product_image"`
-}
-
-type Region struct {
-	RegionID          int16  `json:"region_id"`
-	RegionDescription string `json:"region_description"`
-}
-
-type Role struct {
-	RoleID   int32   `json:"role_id"`
-	RoleName *string `json:"role_name"`
-}
-
-type Shipper struct {
-	ShipperID   int16   `json:"shipper_id"`
-	CompanyName string  `json:"company_name"`
-	Phone       *string `json:"phone"`
-}
-
-type Supplier struct {
-	SupplierID   int16   `json:"supplier_id"`
-	CompanyName  string  `json:"company_name"`
-	ContactName  *string `json:"contact_name"`
-	ContactTitle *string `json:"contact_title"`
-	Address      *string `json:"address"`
-	City         *string `json:"city"`
-	Region       *string `json:"region"`
-	PostalCode   *string `json:"postal_code"`
-	Country      *string `json:"country"`
-	Phone        *string `json:"phone"`
-	Fax          *string `json:"fax"`
-	Homepage     *string `json:"homepage"`
+type OrderFranchisesDetail struct {
+	OfdeID         int32            `json:"ofde_id"`
+	OfdeStartDate  pgtype.Timestamp `json:"ofde_start_date"`
+	OfdeEndDate    pgtype.Timestamp `json:"ofde_end_date"`
+	OfdeQtyUnit    *int32           `json:"ofde_qty_unit"`
+	OfdePrice      *float64         `json:"ofde_price"`
+	OfdeTotalPrice *float64         `json:"ofde_total_price"`
+	OfdeOrfiID     *int32           `json:"ofde_orfi_id"`
+	OfdeFrchID     *int32           `json:"ofde_frch_id"`
 }
 
 type User struct {
 	UserID       int32   `json:"user_id"`
 	UserName     *string `json:"user_name"`
 	UserPassword *string `json:"user_password"`
+	UserEmail    *string `json:"user_email"`
 	UserPhone    *string `json:"user_phone"`
-	UserRole     *string `json:"user_role"`
 	UserToken    *string `json:"user_token"`
-}
-
-type UserRole struct {
-	UsroUserID int32 `json:"usro_user_id"`
-	UsroRoleID int32 `json:"usro_role_id"`
 }

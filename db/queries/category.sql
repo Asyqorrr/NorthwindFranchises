@@ -1,23 +1,22 @@
 -- name: FindCategoryById :one
-SELECT category_id, category_name, description, picture
-	FROM categorieS WHERE category_id=$1;
+SELECT cate_id, cate_name
+	FROM category WHERE cate_id=$1;
 
 -- name: FindAllCategory :many
-SELECT category_id, category_name, description, picture
-	FROM categories;
+SELECT cate_id, cate_name FROM category;
 
 -- name: CreateCategory :one
-INSERT INTO categories(
-	 category_name, description, picture)
-	VALUES ($1, $2, $3) RETURNING *;
+INSERT INTO category(
+	 cate_name)
+	VALUES ($1) RETURNING *;
 
 -- name: UpdateCategory :one
-UPDATE categories
-	SET category_name=$2, description=$3, picture=$4
-	WHERE category_id=$1    
+UPDATE category
+	SET cate_name=$2
+	WHERE cate_id=$1    
     RETURNING *;
 
 -- name: DeleteCategory :exec
-DELETE FROM categories
-	WHERE category_id=$1
+DELETE FROM category
+	WHERE cate_id=$1
     RETURNING *;
